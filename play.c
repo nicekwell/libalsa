@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <tinyalsa/asoundlib.h>
 
 #include <sys/time.h>
@@ -38,10 +39,8 @@ int main(int argc, char *argv[])
        在pcm.c里面，会计算 buffer_size = period_size * period_count，
            buffer_size是上层一次传给底层的frame个数。
        */
-#define PERIOD_SIZE     (1024)
-#define PERIOD_COUNT    (2)
-    config.period_size = PERIOD_SIZE;
-    config.period_count = PERIOD_COUNT;
+    config.period_size = 1024;
+    config.period_count = 2;
 
     config.silence_threshold = 1024 * 2;
     config.stop_threshold = 1024 * 2;
@@ -65,8 +64,9 @@ int main(int argc, char *argv[])
 
     //下面开始读取文件并写入pcm设备播放音乐
     {
-        FILE *fp = fopen("./gaobaiqiqiu_48k2c16bi.pcm", "rb");
-        unsigned char buf[PERIOD_SIZE*PERIOD_COUNT*2*2];        //这里需要能放下一个 buffer_size 大小数据
+//        FILE *fp = fopen("./gaobaiqiqiu_48k2c16bi.pcm", "rb");
+        FILE *fp = fopen("./capture_48k2c16bi.pcm", "rb");
+        unsigned char *buf = malloc(size);  //这里需要能放下一个 buffer_size 大小数据
         //也就是上面获取到的size大小，period_size*period_count * channels * bytes
         int readcount;
         start_time = gettimeus();
@@ -87,12 +87,17 @@ int main(int argc, char *argv[])
             if(readcount <= 0)
                 break;
             if(readcount > 0) {
+                /* 写pcm设备，传入的参数是：
+                   <pcm设备>, <写入数据的地址>, <写入的frame>
+                   注意第三个参数是写入frame个数，可通过 pcm_bytes_to_frames 把字节数转换成帧数
+                 */
                 if (pcm_writei(pcm1, buf, pcm_bytes_to_frames(pcm1, readcount)) < 0) {
                     break;
                 }
             }
         }
         fclose(fp);
+        free(buf);
     }
 
 
