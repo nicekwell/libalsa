@@ -29,10 +29,17 @@ int main(int argc, char *argv[])
                                            PCM_FORMAT_S16_LE     常用，16位
                                            PCM_FORMAT_S16_BE
                                            PCM_FORMAT_S8         */
-#define PERIOD_SIZE     (1024)
-#define PERIOD_COUNT    (2)
-    config.period_size = PERIOD_SIZE;
-    config.period_count = PERIOD_COUNT;
+    /* period_size 和 period_count，
+       period_size：设置到底层的中断大小，每次中断会给底层传入period_size个frame。这是送到声卡硬件缓冲区的大小。
+       注意是frame，也就是各个通道分别采样的次数，不是字节数！
+       period_count：底层的缓存设置成多少个period_size，最小值是2。
+       一次传给底层period_size个frame，底层缓存一般是这个大小的若干倍，多个period_size的内存循环切换写入。
+      
+       在pcm.c里面，会计算 buffer_size = period_size * period_count，
+       buffer_size是上层一次传给底层的frame个数。
+    */
+    config.period_size = 1024;
+    config.period_count = 2;
 
     config.silence_threshold = 0;
     config.stop_threshold = 0;
